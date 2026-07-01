@@ -13,7 +13,13 @@ def keyboard_menu():
         Button.text("Низкий бюджет", color=Color.SECONDARY),
         Button.text("Высокий бюджет", color=Color.SECONDARY)
     )
-    keyboard.row(Button.text("История", color=Color.SECONDARY))
+    keyboard.row(
+        Button.text("Изменить оценку", color=Color.SECONDARY),
+    )
+    keyboard.row(
+        Button.text("История", color=Color.SECONDARY),
+        Button.text("История за дату", color=Color.SECONDARY),
+    )
     return keyboard
 
 
@@ -51,5 +57,29 @@ def keyboard_budget_max_film():
         Button.text("🌙 Назад", color=Color.PRIMARY),
         Button.text("☀️ Вперед", color=Color.POSITIVE),
         Button.text("⛔ Выход", color=Color.NEGATIVE),
+    )
+    return keyboard
+
+
+def keyboard_history_film():
+    keyboard = Keyboard(one_time=False)
+    keyboard.row(
+        Button.text("📖 Назад", color=Color.PRIMARY),
+        Button.text("📖 Вперед", color=Color.PRIMARY),
+    )
+    keyboard.row(
+        Button.text("✅ Просмотрено", color=Color.POSITIVE),
+        Button.text("🏁 Выход", color=Color.NEGATIVE),
+    )
+    return keyboard
+
+def keyboard_history_date():
+    keyboard = Keyboard(one_time=False)
+    keyboard.row(
+        Button.text("📚 Назад", color=Color.PRIMARY),
+        Button.text("📚 Вперед", color=Color.PRIMARY),
+    )
+    keyboard.row(
+        Button.text("🔖 Выход", color=Color.NEGATIVE),
     )
     return keyboard

@@ -8,6 +8,9 @@ from fastvk.fsm import FSMContext
 from app.api.kinopoisk import film_filter_cursor
 from app.fsm.film_filter_fsm import SearchFilmRating
 from app.keyboards.reply import keyboard_rating_film, keyboard_menu
+from app.settings.connect import created_session
+from app.db.crud import add_history
+
 
 router_rating = Router()
 
@@ -38,19 +41,26 @@ async def show_results(message: Message, state: FSMContext, next_page_c = None, 
         next_page = result.get(1).get("Next", None)
         prev_page = result.get(1).get("Prev", None)
         await state.update_data(next_page=next_page, prev_page=prev_page)
-        parts = ["🎬 **Результаты поиска:**\n"]
+        parts = "🎬 **Результаты поиска:**\n"
         for idx, film_info in result.items():
-            parts.append(f"**{idx}: ")
-            parts.append(f"Название: {film_info['Название']}")
-            parts.append(f"📖 Описание: {film_info["Описание"]}")
-            parts.append(f"📅 Год: {film_info['Выпуск']}")
-            parts.append(f"🌍 Страна: {film_info['Страна']}")
-            parts.append(f"🎭 Жанр: {film_info['Жанр']}")
-            parts.append(f"⭐ Рейтинг: {film_info['Рейтинг']}")
-            parts.append(f"🖼️ Постер: {film_info['Постер']}")
-
-        await message.answer("\n".join(parts), keyboard=keyboard_rating_film())
+            parts += f"**{idx}: "
+            parts += f"Название: {film_info['Название']}"
+            parts += f"📖 Описание: {film_info["Описание"]}"
+            parts += f"📅 Год: {film_info['Выпуск']}"
+            parts += f"🌍 Страна: {film_info['Страна']}"
+            parts += f"🎭 Жанр: {film_info['Жанр']}"
+            parts += f"⭐ Рейтинг: {film_info['Рейтинг']}"
+            parts += f"🖼️ Постер: {film_info['Постер']}"
+        await message.answer(parts, keyboard=keyboard_rating_film())
         await state.set_state(SearchFilmRating.page)
+        user_id = message.from_user.id
+        user_name = message.from_user.first_name
+        try:
+            async with created_session() as s:
+                await add_history(db=s, user_id=user_id, user_name=user_name, command="По рейтингу",
+                                  query=message.text, result_preview=parts)
+        except Exception as e:
+            logging.error(f"DB error in show_results: {e}")
     except Exception as e:
         logging.error(f"Film_rating API error: {e}", exc_info=True)
 

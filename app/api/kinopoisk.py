@@ -1,8 +1,5 @@
-import asyncio
 import httpx
 import logging
-
-from pprint import pprint
 
 from app.settings.config import api_list_category_films, x_api_key, film_name, film_filters_cursor
 

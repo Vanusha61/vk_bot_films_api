@@ -8,6 +8,8 @@ from fastvk.fsm import FSMContext
 from app.api.kinopoisk import search_films
 from app.fsm.search_states import SearchFilmName
 from app.keyboards.reply import keyboard_pages_film_name, keyboard_menu
+from app.db.crud import add_history
+from app.settings.connect import created_session
 
 router_film_name = Router()
 
@@ -36,19 +38,24 @@ async def show_results(message: Message, state: FSMContext) -> None:
         await message.answer("Ничего не найдено.")
         await state.clear()
         return
-    parts = ["🎬 **Результаты поиска:**\n"]
+    parts = "🎬 **Результаты поиска:**\n"
     for idx, film_info in result.items():
-        parts.append(f"**{idx}: ")
-        parts.append(f"Название: {film_info['Название']}")
-        parts.append(f"📖 Описание: {film_info["Описание"]}")
-        parts.append(f"📅 Год: {film_info['Выпуск']}")
-        parts.append(f"🌍 Страна: {film_info['Страна']}")
-        parts.append(f"🎭 Жанр: {film_info['Жанр']}")
-        parts.append(f"⭐ Рейтинг: {film_info['Рейтинг']}")
-        parts.append(f"🖼️ Постер: {film_info['Постер']}")
-
-
-    sent_id = await message.answer("\n".join(parts), keyboard=keyboard_pages_film_name())
+        parts += (f"**{idx}: ")
+        parts += (f"Название: {film_info['Название']}")
+        parts += (f"📖 Описание: {film_info['Описание']}")
+        parts += (f"📅 Год: {film_info['Выпуск']}")
+        parts += (f"🌍 Страна: {film_info['Страна']}")
+        parts+=(f"🎭 Жанр: {film_info['Жанр']}")
+        parts+=(f"⭐ Рейтинг: {film_info['Рейтинг']}")
+        parts+=(f"🖼️ Постер: {film_info['Постер']}")
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+    try:
+        async with created_session() as s:
+            await add_history(db=s,user_id=user_id, user_name=user_name, command="Поиск по названию", query=message.text, result_preview=parts)
+    except Exception as e:
+        logging.error(f"DB error in show_results: {e}")
+    sent_id = await message.answer(parts, keyboard=keyboard_pages_film_name())
 
     await state.update_data(last_message_id=sent_id)
     await state.set_state(SearchFilmName.page)

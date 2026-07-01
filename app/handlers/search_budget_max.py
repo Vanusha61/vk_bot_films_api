@@ -8,7 +8,8 @@ from fastvk.fsm import FSMContext
 from app.api.kinopoisk import film_filter_budget_max
 from app.fsm.fsm_budget import BudgetStatesMax
 from app.keyboards.reply import keyboard_budget_max_film,keyboard_menu
-
+from app.settings.connect import created_session
+from app.db.crud import add_history
 
 router_budget_max = Router()
 
@@ -40,20 +41,28 @@ async def show_results(message: Message, state: FSMContext, next_page: str = Non
             return
         next_page = result.get(1, None).get("Next", None)
         prev_page = result.get(1, None).get("Prev", None)
-        parts = ["🎬 **Результаты поиска:**\n"]
+        parts = "🎬 **Результаты поиска:**\n"
         for idx, film_info in result.items():
-            parts.append(f"**{idx}: ")
-            parts.append(f"Название: {film_info['Название']}")
-            parts.append(f"📖 Описание: {film_info["Описание"]}")
-            parts.append(f"📅 Год: {film_info['Выпуск']}")
-            parts.append(f"🌍 Страна: {film_info['Страна']}")
-            parts.append(f"🎭 Жанр: {film_info['Жанр']}")
-            parts.append(f"⭐ Рейтинг: {film_info['Рейтинг']}")
-            parts.append(f"🖼️ Постер: {film_info['Постер']}")
+            parts += f"**{idx}: "
+            parts += f"Название: {film_info['Название']}"
+            parts += f"📖 Описание: {film_info["Описание"]}"
+            parts += f"📅 Год: {film_info['Выпуск']}"
+            parts += f"🌍 Страна: {film_info['Страна']}"
+            parts += f"🎭 Жанр: {film_info['Жанр']}"
+            parts += f"⭐ Рейтинг: {film_info['Рейтинг']}"
+            parts += f"🖼️ Постер: {film_info['Постер']}"
 
-        await message.answer("\n".join(parts), keyboard=keyboard_budget_max_film())
+        await message.answer(parts, keyboard=keyboard_budget_max_film())
         await state.set_state(BudgetStatesMax.page)
         await state.update_data(next_page=next_page, prev_page=prev_page)
+        user_id = message.from_user.id
+        user_name = message.from_user.first_name
+        try:
+            async with created_session() as s:
+                await add_history(db=s, user_id=user_id, user_name=user_name, command="Высокий бюджет",
+                                  query=message.text, result_preview=parts)
+        except Exception as e:
+            logging.error(f"DB error in show_results: {e}")
     except Exception as e:
         logging.error(f"Error Api budget_min: {e}")
 
