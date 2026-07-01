@@ -10,7 +10,7 @@ from app.db.models import History
 
 
 
-async def add_history(db: AsyncSession, user_id: int, user_name: str, command: str, query: str, result_preview: str, next_page: str = None, prev_page: str = None) -> bool:
+async def add_history(db: AsyncSession, user_id: int, user_name: str, command: str, query: str, result_preview: str, next_page: str = None, prev_page: str = None) -> bool | None:
     try:
         history = History(
             user_vk_id = user_id,
@@ -21,13 +21,21 @@ async def add_history(db: AsyncSession, user_id: int, user_name: str, command: s
             next_page_url = next_page,
             prev_page_url = prev_page,
         )
+        result = await db.execute(
+            select(History).where(
+                History.user_vk_id == user_id,
+                History.query == query,
+            )
+        )
+        if result.scalar_one_or_none():
+            return False
         db.add(history)
         await db.commit()
         return True
     except Exception as e:
         await db.rollback()
         logging.error(f"DB error add_history: {e}")
-        return False
+        return None
 
 async def result_history(user_id: int, db: AsyncSession) -> List[History] | None:
     try:

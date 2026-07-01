@@ -12,7 +12,7 @@ class History(Base):
     user_vk_id = Column(Integer, nullable=False)
     user_name = Column(VARCHAR(50), nullable=False)
     command = Column(VARCHAR(50), nullable=False)
-    query = Column(VARCHAR(200), nullable=False, unique=True)
+    query = Column(VARCHAR(200), nullable=False)
     result_preview = Column(Text, nullable=False)
     next_page_url = Column(VARCHAR(200), nullable=True)
     prev_page_url = Column(VARCHAR(200), nullable=True)
